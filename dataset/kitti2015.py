@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     dataset = KITTI2015Dataset(
         "lists/kitti2015_train.list",
-        "/home/tiger/KITTIStereo/KITTI2015/training",
+        "/data/KITTI2015_Stereo/training",
         training=True,
     )
     loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
