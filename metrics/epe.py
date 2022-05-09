@@ -1,8 +1,8 @@
 import torch
-from torchmetrics import AverageMeter
+from torchmetrics import MeanMetric
 
 
-class EPEMetric(AverageMeter):
+class EPEMetric(MeanMetric):
     def __init__(self):
         super().__init__()
 

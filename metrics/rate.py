@@ -1,8 +1,8 @@
 import torch
-from torchmetrics import AverageMeter
+from torchmetrics import MeanMetric
 
 
-class RateMetric(AverageMeter):
+class RateMetric(MeanMetric):
     def __init__(self, threshold):
         super().__init__()
         self.threshold = threshold
