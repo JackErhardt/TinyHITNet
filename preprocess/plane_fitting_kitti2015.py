@@ -55,4 +55,4 @@ def main(root, list_path):
 
 
 if __name__ == "__main__":
-    main("/data/KITTI2015_Stereo/training", "lists/kitti2015_train.list")
+    main("/data/kitti/2015/training", "lists/kitti2015_train.list")

@@ -18,11 +18,11 @@ python3 train.py \
 --num_workers_val 2 \
 --data_augmentation 1 \
 --data_type_train KITTI2012 KITTI2015 \
---data_root_train /data/KITTI2012_Stereo/training /data/KITTI2015_Stereo/training \
+--data_root_train /data/kitti/2012/training /data/kitti/2015/training \
 --data_list_train lists/kitti2012_train170.list lists/kitti2015_train180.list \
 --data_size_train 1152 320 \
 --data_type_val KITTI2015 \
---data_root_val /data/KITTI2015_Stereo/training \
+--data_root_val /data/kitti/2015/training \
 --data_list_val lists/kitti2015_val20.list \
 --data_size_val 1242 375 \
 --init_loss_k 3
