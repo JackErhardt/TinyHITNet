@@ -53,4 +53,4 @@ def main(root, list_path):
 
 
 if __name__ == "__main__":
-    main("/data/kitti/2012/training", "lists/kitti2012_train.list")
+    main("/z/erharj/kitti/2012/training", "lists/kitti2012_train.list")
