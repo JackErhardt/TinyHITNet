@@ -43,5 +43,5 @@ def main(root, list_path):
 
 
 if __name__ == "__main__":
-    main("/home/tiger/SceneFlow", "lists/sceneflow_train.list")
-    main("/home/tiger/SceneFlow", "lists/sceneflow_test.list")
+    main("/z/erharj/sceneflow", "lists/sceneflow_train.list")
+    main("/z/erharj/sceneflow", "lists/sceneflow_test.list")
