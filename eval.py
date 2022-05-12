@@ -38,9 +38,8 @@ class EvalModel(pl.LightningModule):
         return
 
     def test_epoch_end(self, outputs):
-        print(self.metric.compute())
+        self.log_dict(self.metric.compute())
         return
-
 
 if __name__ == "__main__":
     import argparse
