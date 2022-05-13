@@ -1,6 +1,6 @@
-# # Comment in when running as main
-# import sys
-# sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
+# Comment in when running as main
+import sys
+sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
 
 import cv2
 import torch
@@ -40,8 +40,6 @@ class SceneFlowDataset(Dataset):
         #     self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
         # )
 
-        print("LP:\t{}\nRP:\t{}\nPFM:\t{}\n".format(left_path, right_path, pfm_path))
-
         data = {
             "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
             "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR), bgr=True),
@@ -61,7 +59,7 @@ if __name__ == "__main__":
     from colormap import apply_colormap
 
     dataset = SceneFlowDataset(
-        "lists/sceneflow_temp.list",
+        "lists/sceneflow_log.list",
         "/z/erharj/sceneflow",
         training=True,
     )

@@ -25,4 +25,4 @@ python3 train.py \
 --data_root_val /z/erharj/kitti/2015/training \
 --data_list_val lists/kitti2015_val20.list \
 --data_size_val 1242 375 \
---pretrain ckpt/stereo_net.ckpt \
+--pretrain ckpt/stereonet_sf_finalpass.ckpt \

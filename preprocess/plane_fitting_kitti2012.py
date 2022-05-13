@@ -1,3 +1,7 @@
+# Comment in when running as main
+import sys
+sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
+
 import cv2
 import torch
 import tqdm
