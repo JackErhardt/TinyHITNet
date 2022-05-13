@@ -1,6 +1,6 @@
 # Comment in when running as main
 import sys
-sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
+sys.path.append('./')
 
 import cv2
 import torch
@@ -51,8 +51,8 @@ def main(root, list_path):
     with open(list_path, "rt") as fp:
         file_list = [Path(line.strip()) for line in fp]
 
-    lock_list = [mp.Lock() for _ in range(8)]
-    with mp.Pool(8, process_init, [lock_list, root]) as pool:
+    lock_list = [mp.Lock() for _ in range(1)]
+    with mp.Pool(1, process_init, [lock_list, root]) as pool:
         list(tqdm.tqdm(pool.imap_unordered(process, file_list), total=len(file_list)))
 
 
