@@ -2,7 +2,7 @@ python3 train.py \
 --log_dir logs \
 --exp_name hitnet_kitti \
 --model HITNet_KITTI \
---gpus 4 \
+--gpus -1 \
 --check_val_every_n_epoch 5 \
 --max_steps 500000 \
 --accelerator ddp \
@@ -12,8 +12,8 @@ python3 train.py \
 --lr 4e-4 \
 --lr_decay 400000 0.25 408000 0.1 410000 0.025 \
 --lr_decay_type Lambda \
---batch_size 4 \
---batch_size_val 4 \
+--batch_size 1 \
+--batch_size_val 1 \
 --num_workers 2 \
 --num_workers_val 2 \
 --data_augmentation 1 \

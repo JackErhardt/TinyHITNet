@@ -36,15 +36,15 @@ class SceneFlowDataset(Dataset):
         left_path = self.root / "frames_finalpass" / self.file_list[index]
         right_path = left_path.parents[1] / "right" / left_path.name
         pfm_path = self.root / "disparity" / self.file_list[index].with_suffix(".pfm")
-        # dxy_path = (
-        #     self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
-        # )
+        dxy_path = (
+            self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
+        )
 
         data = {
             "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
             "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR), bgr=True),
             "disp": np2torch(readPFM(pfm_path)),
-            # "dxy": np2torch(np.load(dxy_path), t=False),
+            "dxy": np2torch(np.load(dxy_path), t=False),
         }
         if self.crop_size is not None:
             data = crop_and_pad(data, self.crop_size, self.training)
@@ -55,8 +55,8 @@ class SceneFlowDataset(Dataset):
 
 if __name__ == "__main__":
     import torchvision
-    # from colormap import apply_colormap, dxy_colormap
-    from colormap import apply_colormap
+    from colormap import apply_colormap, dxy_colormap
+    # from colormap import apply_colormap
 
     dataset = SceneFlowDataset(
         "lists/sceneflow_log.list",
@@ -69,8 +69,8 @@ if __name__ == "__main__":
         disp = torch.clip(disp / 192 * 255, 0, 255).long()
         disp = apply_colormap(disp)
 
-        # dxy = data["dxy"]
-        # dxy = dxy_colormap(dxy)
-        # output = torch.cat((data["left"], data["right"], disp, dxy), dim=0)
-        output = torch.cat((data["left"], data["right"], disp), dim=0)
+        dxy = data["dxy"]
+        dxy = dxy_colormap(dxy)
+        output = torch.cat((data["left"], data["right"], disp, dxy), dim=0)
+        # output = torch.cat((data["left"], data["right"], disp), dim=0)
         torchvision.utils.save_image(output, "{:06d}.png".format(ids), nrow=1)
