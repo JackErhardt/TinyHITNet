@@ -1,6 +1,6 @@
-# Comment in when running as main
-import sys
-sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
+# # Comment in when running as main
+# import sys
+# sys.path.append('./')
 
 import cv2
 import torch

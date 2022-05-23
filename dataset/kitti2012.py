@@ -1,6 +1,6 @@
-# Comment in when running as main
-import sys
-sys.path.append('/afs/eecs.umich.edu/vlsisp/users/erharj/TinyHITNet')
+# # Comment in when running as main
+# import sys
+# sys.path.append('./')
 
 import cv2
 import torch
@@ -28,26 +28,36 @@ class KITTI2012Dataset(Dataset):
         self.crop_size = crop_size
         self.training = training
         self.augmentation = augmentation
+        self.crops_per_image = 16
+        self.min_crop_x = 100
+        self.max_crop_x = 200
+        self.min_crop_y = 200
+        self.max_crop_y = 400
 
     def __len__(self):
-        return len(self.file_list)
+        return len(self.file_list) * self.crops_per_image
 
     def __getitem__(self, index):
-        left_path = self.root / "colored_0" / self.file_list[index]
-        right_path = self.root / "colored_1" / self.file_list[index]
-        disp_path = self.root / "disp_occ" / self.file_list[index]
+        file_index = int(index / self.crops_per_image)
+        left_path = self.root / "colored_0" / self.file_list[file_index]
+        right_path = self.root / "colored_1" / self.file_list[file_index]
+        disp_path = self.root / "disp_occ" / self.file_list[file_index]
         dxy_path = (
-            self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
+            self.root / "slant_window" / self.file_list[file_index].with_suffix(".npy")
         )
 
+        shp = cv2.imread(str(left_path), cv2.IMREAD_COLOR).shape
+        (dx, dy) = (np.random.randint(self.min_crop_x, self.max_crop_x), np.random.randint(self.min_crop_y, self.max_crop_y))
+        (x, y) = (np.random.randint(0, shp[0]-dx-1), np.random.randint(0, shp[1]-dy-1))
+
         data = {
-            "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
-            "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR), bgr=True),
+            "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
+            "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
             "disp": np2torch(
-                cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)
+                cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)[x:x+dx,y:y+dy]
                 / 256
             ),
-            "dxy": np2torch(np.load(dxy_path), t=False),
+            "dxy": np2torch(np.load(dxy_path)[:,x:x+dx,y:y+dy], t=False),
         }
         if self.crop_size is not None:
             data = crop_and_pad(data, self.crop_size, self.training)

@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,6 +24,11 @@ class PredictModel(pl.LightningModule):
 def predict(model, lp, rp, width, op):
     left = cv2.imread(str(lp), cv2.IMREAD_COLOR)
     right = cv2.imread(str(rp), cv2.IMREAD_COLOR)
+    shp = left.shape
+    (dx, dy) = (np.random.randint(100, 200), np.random.randint(200, 400))
+    (x, y) = (np.random.randint(0,shp[0]-dx-1), np.random.randint(0,shp[1]-dy-1))
+    left = left[x:x+dx,y:y+dy,:]
+    right = right[x:x+dx,y:y+dy,:]
     if width is not None and width != left.shape[1]:
         height = int(round(width / left.shape[1] * left.shape[0]))
         left = cv2.resize(
