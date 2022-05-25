@@ -167,5 +167,7 @@ if __name__ == "__main__":
             LearningRateMonitor(logging_interval="step"),
             LogColorDepthMapCallback(),
         ],
+        accelerator='gpu',
+        devices=-1,
     )
     trainer.fit(model)
