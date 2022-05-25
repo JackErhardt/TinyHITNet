@@ -20,6 +20,9 @@ class KITTI2015Dataset(Dataset):
         crop_size=None,
         training=False,
         augmentation=False,
+        crops_per_image=None,
+        crop_width=None,
+        crop_height=None
     ):
         super().__init__()
         with open(image_list, "rt") as fp:
@@ -28,17 +31,24 @@ class KITTI2015Dataset(Dataset):
         self.crop_size = crop_size
         self.training = training
         self.augmentation = augmentation
-        self.crops_per_image = 16
-        self.min_crop_x = 100
-        self.max_crop_x = 200
-        self.min_crop_y = 200
-        self.max_crop_y = 400
+        self.crops_per_image = crops_per_image
+        self.crop_width = crop_width
+        self.crop_height = crop_height
+        if self.crops_per_image is not None:
+            self.crop_x = np.random.randint(0, 375-self.crop_width, size=(len(self)))
+            self.crop_y = np.random.randint(0, 1242-self.crop_height, size=(len(self)))
 
     def __len__(self):
-        return len(self.file_list) * self.crops_per_image
+        if self.crops_per_image is not None:
+            return len(self.file_list) * self.crops_per_image
+        else:
+            return len(self.file_list)
 
     def __getitem__(self, index):
-        file_index = int(index / self.crops_per_image)
+        if self.crops_per_image is not None:
+            file_index = int(index / self.crops_per_image)
+        else:
+            file_index = index
         left_path = self.root / "image_2" / self.file_list[file_index]
         right_path = self.root / "image_3" / self.file_list[file_index]
         disp_path = self.root / "disp_occ_0" / self.file_list[file_index]
@@ -46,9 +56,14 @@ class KITTI2015Dataset(Dataset):
             self.root / "slant_window" / self.file_list[file_index].with_suffix(".npy")
         )
 
-        shp = cv2.imread(str(left_path), cv2.IMREAD_COLOR).shape
-        (dx, dy) = (np.random.randint(self.min_crop_x, self.max_crop_x), np.random.randint(self.min_crop_y, self.max_crop_y))
-        (x, y) = (np.random.randint(0, shp[0]-dx-1), np.random.randint(0, shp[1]-dy-1))
+        shp = cv2.imread(str(left_path), cv2.IMREAD_COLOR).shape    
+        if self.crops_per_image is not None:
+            # crop_index = (index % self.crops_per_image)
+            (dx, dy) = (self.crop_width, self.crop_height)
+            (x, y) = (self.crop_x[index], self.crop_y[index])
+        else:
+            (dx, dy) = (shp[0], shp[1])
+            (x, y) = (0, 0)
 
         data = {
             "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),

@@ -148,6 +148,9 @@ if __name__ == "__main__":
 
     parser = build_parser()
     parser = pl.Trainer.add_argparse_args(parser)
+    parser.add_argument("--crops_per_image", type=int, default=None)
+    parser.add_argument("--crop_width", type=int, default=375)
+    parser.add_argument("--crop_height", type=int, default=1242)
     args = parser.parse_args()
 
     pl.seed_everything(seed=args.seed)
