@@ -53,14 +53,11 @@ if __name__ == "__main__":
     parser.add_argument("--data_list_val", type=str, nargs="+")
     parser.add_argument("--data_size_val", type=int, nargs=2, default=None)
     parser.add_argument("--data_augmentation", type=int, default=0)
-    parser.add_argument("--crops_per_image", type=int, default=None)
-    parser.add_argument("--crop_width", type=int, default=375)
-    parser.add_argument("--crop_height", type=int, default=1242)
 
     args = parser.parse_args()
 
     model = EvalModel(**vars(args)).eval()
-    ckpt = torch.load(args.ckpt)
+    ckpt = torch.load(args.ckpt, map_location='cuda:0')
     if "state_dict" in ckpt:
         model.load_state_dict(ckpt["state_dict"])
     else:

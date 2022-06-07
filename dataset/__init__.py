@@ -33,9 +33,6 @@ def build_dataset(args, training):
                 crop_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
-                crops_per_image=args.crops_per_image,
-                crop_width=args.crop_width,
-                crop_height=args.crop_height,
             )
         elif d_type == "KITTI2012":
             dataset = KITTI2012Dataset(
@@ -44,9 +41,6 @@ def build_dataset(args, training):
                 crop_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
-                crops_per_image=args.crops_per_image,
-                crop_width=args.crop_width,
-                crop_height=args.crop_height,
             )
         else:
             raise NotImplementedError

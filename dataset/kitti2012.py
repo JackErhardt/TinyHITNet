@@ -1,6 +1,6 @@
-# # Comment in when running as main
-# import sys
-# sys.path.append('./')
+# Comment in when running as main
+import sys
+sys.path.append('./')
 
 import cv2
 import torch
@@ -20,60 +20,64 @@ class KITTI2012Dataset(Dataset):
         crop_size=None,
         training=False,
         augmentation=False,
-        crops_per_image=None,
-        crop_width=None,
-        crop_height=None
     ):
         super().__init__()
         with open(image_list, "rt") as fp:
-            self.file_list = [Path(line.strip()) for line in fp]
+            self.file_list, self.xs, self.ys, self.dxs, self.dys = [], [], [], [], []
+            for line in fp:
+                ls = line.strip().split()
+                self.file_list += [Path(ls[0])]
+                if len(ls) == 5:
+                    self.xs += [int(ls[1])]
+                    self.ys += [int(ls[2])]
+                    self.dxs += [int(ls[3])]
+                    self.dys += [int(ls[4])]
+                else:
+                    self.xs += [-1]
+                    self.ys += [-1]
+                    self.dxs += [-1]
+                    self.dys += [-1]
         self.root = Path(root)
         self.crop_size = crop_size
         self.training = training
         self.augmentation = augmentation
-        self.crops_per_image = crops_per_image
-        self.crop_width = crop_width
-        self.crop_height = crop_height
-        if self.crops_per_image is not None:
-            self.crop_x = np.random.randint(0, 375-self.crop_width, size=(len(self)))
-            self.crop_y = np.random.randint(0, 1242-self.crop_height, size=(len(self)))
 
     def __len__(self):
-        if self.crops_per_image is not None:
-            return len(self.file_list) * self.crops_per_image
-        else:
-            return len(self.file_list)
+        return len(self.file_list)
 
     def __getitem__(self, index):
-        if self.crops_per_image is not None:
-            file_index = int(index / self.crops_per_image)
-        else:
-            file_index = index
-        left_path = self.root / "colored_0" / self.file_list[file_index]
-        right_path = self.root / "colored_1" / self.file_list[file_index]
-        disp_path = self.root / "disp_occ" / self.file_list[file_index]
+        left_path = self.root / "colored_0" / self.file_list[index]
+        right_path = self.root / "colored_1" / self.file_list[index]
+        disp_path = self.root / "disp_occ" / self.file_list[index]
         dxy_path = (
-            self.root / "slant_window" / self.file_list[file_index].with_suffix(".npy")
+            self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
         )
-    
-        shp = cv2.imread(str(left_path), cv2.IMREAD_COLOR).shape    
-        if self.crops_per_image is not None:
-            # crop_index = (index % self.crops_per_image)
-            (dx, dy) = (self.crop_width, self.crop_height)
-            (x, y) = (self.crop_x[index], self.crop_y[index])
-        else:
-            (dx, dy) = (shp[0], shp[1])
-            (x, y) = (0, 0)
+        x = self.xs[index]
+        y = self.ys[index]
+        dx = self.dxs[index]
+        dy = self.dys[index]
 
-        data = {
-            "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
-            "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
-            "disp": np2torch(
-                cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)[x:x+dx,y:y+dy]
-                / 256
-            ),
-            "dxy": np2torch(np.load(dxy_path)[:,x:x+dx,y:y+dy], t=False),
-        }
+        if(x != -1 and y != -1 and dx != -1 and dy != -1):
+            data = {
+                "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
+                "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR)[x:x+dx,y:y+dy,:], bgr=True),
+                "disp": np2torch(
+                    cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)[x:x+dx,y:y+dy]
+                    / 256
+                ),
+                "dxy": np2torch(np.load(dxy_path)[:,x:x+dx,y:y+dy], t=False),
+            }
+        else:
+            data = {
+                "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
+                "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR), bgr=True),
+                "disp": np2torch(
+                    cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)
+                    / 256
+                ),
+                "dxy": np2torch(np.load(dxy_path), t=False),
+            }
+
         if self.crop_size is not None:
             data = crop_and_pad(data, self.crop_size, self.training)
         if self.training and self.augmentation:
@@ -87,7 +91,7 @@ if __name__ == "__main__":
     # from colormap import apply_colormap
 
     dataset = KITTI2012Dataset(
-        "lists/kitti2012_val24.list",
+        "lists/kitti2012_val24_medium.list",
         "/z/erharj/kitti/2012/training",
         training=True,
     )
