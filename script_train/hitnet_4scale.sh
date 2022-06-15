@@ -1,12 +1,12 @@
 python3 train.py \
 --log_dir logs \
 --exp_name hitnet_4scale \
---model HITNet_4scale \
+--model HITNet_4Scale \
 --check_val_every_n_epoch 20 \
 --max_steps 500000 \
 --accelerator gpu \
 --strategy ddp \
---max_disp 256 \
+--max_disp 128 \
 --max_disp_val 192 \
 --optmizer Adam \
 --lr 4e-4 \

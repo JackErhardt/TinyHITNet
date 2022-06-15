@@ -495,9 +495,10 @@ if __name__ == "__main__":
 
     left = torch.rand(1, 3, 375, 1242)
     right = torch.rand(1, 3, 375, 1242)
-    model = HITNet_KITTI()
+    model = HITNet_4Scale()
 
-    print(model(left, right)["disp"].size())
+    data = model(left, right)
+    print(data["disp"].size())
 
     total_ops, total_params = profile(
         model,
