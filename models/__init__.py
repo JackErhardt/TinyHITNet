@@ -1,6 +1,7 @@
 from .hit_net_sf import HITNet_SF, HITNetXL_SF
 from .hit_net_kitti import HITNet_KITTI
 from .stereo_net import StereoNet
+from .hit_net_4scale import HITNet_4Scale
 
 
 def build_model(args):
@@ -10,6 +11,8 @@ def build_model(args):
         model = HITNetXL_SF()
     elif args.model == "HITNet_KITTI":
         model = HITNet_KITTI()
+    elif args.model == "HITNet_4Scale":
+        model = HITNet_4Scale()
     elif args.model == "StereoNet":
         model = StereoNet()
     else:

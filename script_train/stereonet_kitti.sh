@@ -4,16 +4,16 @@ python3 train.py \
 --model StereoNet \
 --check_val_every_n_epoch 9 \
 --sync_batchnorm True \
---gpus -1 \
---max_steps 50000 \
+--max_steps 2000000 \
+--accelerator gpu \
 --strategy ddp \
 --max_disp 192 \
 --optmizer RMS \
 --lr 1e-3 \
 --lr_decay 14000 0.9 \
 --lr_decay_type Step \
---batch_size 2 \
---batch_size_val 8 \
+--batch_size 1 \
+--batch_size_val 1 \
 --num_workers 16 \
 --num_workers_val 2 \
 --data_augmentation 1 \

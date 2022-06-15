@@ -4,8 +4,8 @@ python3 train.py \
 --model StereoNet \
 --check_val_every_n_epoch 9 \
 --sync_batchnorm True \
---gpus -1 \
 --max_steps 150000 \
+--accelerator gpu \
 --strategy ddp \
 --max_disp 192 \
 --optmizer RMS \

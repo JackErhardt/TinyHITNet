@@ -148,9 +148,7 @@ if __name__ == "__main__":
 
     parser = build_parser()
     parser = pl.Trainer.add_argparse_args(parser)
-    parser.add_argument("--crops_per_image", type=int, default=None)
-    parser.add_argument("--crop_width", type=int, default=375)
-    parser.add_argument("--crop_height", type=int, default=1242)
+    parser.add_argument("--roi_padding", type=int, default=-1)
     args = parser.parse_args()
 
     pl.seed_everything(seed=args.seed)
@@ -170,7 +168,6 @@ if __name__ == "__main__":
             LearningRateMonitor(logging_interval="step"),
             LogColorDepthMapCallback(),
         ],
-        accelerator='gpu',
-        devices=-1,
+        devices=-1, # [0, 1, 2, 3],
     )
     trainer.fit(model)

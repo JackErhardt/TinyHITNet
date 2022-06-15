@@ -33,8 +33,9 @@ class EvalModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         pred = self(batch["left"], batch["right"])
-        mask = (batch["disp"] < self.max_disp) & (batch["disp"] > 1e-3)
-        self.metric(pred["disp"], batch["disp"], mask)
+        c2r = batch["crop2roi"]
+        mask = (batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]] < self.max_disp) & (batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]] > 1e-3)
+        self.metric(pred["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]], batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]], mask)
         return
 
     def test_epoch_end(self, outputs):
@@ -53,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_list_val", type=str, nargs="+")
     parser.add_argument("--data_size_val", type=int, nargs=2, default=None)
     parser.add_argument("--data_augmentation", type=int, default=0)
+    parser.add_argument("--roi_padding", type=int, default=0)
 
     args = parser.parse_args()
 

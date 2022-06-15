@@ -22,7 +22,7 @@ def build_dataset(args, training):
             dataset = SceneFlowDataset(
                 image_list=d_list,
                 root=d_root,
-                crop_size=data_size,
+                clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
             )
@@ -30,17 +30,19 @@ def build_dataset(args, training):
             dataset = KITTI2015Dataset(
                 image_list=d_list,
                 root=d_root,
-                crop_size=data_size,
+                clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
+                roi_padding=args.roi_padding,
             )
         elif d_type == "KITTI2012":
             dataset = KITTI2012Dataset(
                 image_list=d_list,
                 root=d_root,
-                crop_size=data_size,
+                clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
+                roi_padding=args.roi_padding,
             )
         else:
             raise NotImplementedError

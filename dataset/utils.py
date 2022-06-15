@@ -57,7 +57,7 @@ def readPFM(file):
     return data
 
 
-def crop_and_pad(data: dict, crop_size, training):
+def clip_and_pad(data: dict, crop_size, training):
     src_h, src_w = list(data.values())[0].shape[-2:]
     dst_w, dst_h = crop_size
 
@@ -129,4 +129,28 @@ def augmentation(data: dict, training):
     #     right_noise = torch.normal(mean=0, std=std[1], size=data["right"].size())
     #     data["left"] = torch.clip(data["left"] + left_noise, 0, 1)
     #     data["right"] = torch.clip(data["right"] + right_noise, 0, 1)
+    return data
+
+
+def crop_and_roi(data: dict, image2roi, roi_padding):
+    src_h, src_w = list(data.values())[0].shape[-2:]
+
+    if roi_padding != -1:
+        roi_pad = [ min(roi_padding, image2roi[0]), min(roi_padding, src_h - image2roi[1]),
+                    min(roi_padding, image2roi[2]), min(roi_padding, src_w - image2roi[3])]
+    else:
+        roi_pad = [ image2roi[0], src_h - image2roi[1],
+                    image2roi[2], src_w - image2roi[3]]
+
+    image2crop = [ image2roi[0] - roi_pad[0], image2roi[1] + roi_pad[1],
+                   image2roi[2] - roi_pad[2], image2roi[3] + roi_pad[3]]
+
+    crop2roi = [ roi_pad[0], roi_pad[0] + image2roi[1] - image2roi[0],
+                 roi_pad[2], roi_pad[2] + image2roi[3] - image2roi[2]]
+
+    for k in data.keys():
+        data[k] = data[k][:, image2crop[0]:image2crop[1], image2crop[2]:image2crop[3]]
+
+    data['crop2roi'] = crop2roi
+
     return data

@@ -2,9 +2,9 @@ python3 train.py \
 --log_dir logs \
 --exp_name hitnet_sf_finalpass \
 --model HITNet_SF \
---gpus -1 \
 --max_steps 2000000 \
---accelerator ddp \
+--accelerator gpu \
+--strategy ddp \
 --max_disp 320 \
 --max_disp_val 192 \
 --optmizer Adam \

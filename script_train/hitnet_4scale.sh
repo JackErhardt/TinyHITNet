@@ -1,7 +1,7 @@
 python3 train.py \
 --log_dir logs \
---exp_name hitnet_kitti \
---model HITNet_KITTI \
+--exp_name hitnet_4scale \
+--model HITNet_4scale \
 --check_val_every_n_epoch 20 \
 --max_steps 500000 \
 --accelerator gpu \

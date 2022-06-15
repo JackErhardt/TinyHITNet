@@ -17,17 +17,27 @@ class SceneFlowDataset(Dataset):
         self,
         image_list,
         root,
-        crop_size=None,
+        clip_size=None,
         training=False,
         augmentation=False,
+        roi_padding=-1,
     ):
         super().__init__()
         with open(image_list, "rt") as fp:
             self.file_list = [Path(line.strip()) for line in fp]
+            self.rois = [] # top, bottom, left, right
+            for line in fp:
+                ls = line.strip().split()
+                self.file_list += [Path(ls[0])]
+                if len(ls) == 5:
+                    self.rois += [[int(ls[1]), int(ls[2]), int(ls[3]), int(ls[4])]]
+                else:
+                    self.rois += [[0, 0, 0, 0]]
         self.root = Path(root)
-        self.crop_size = crop_size
+        self.clip_size = clip_size
         self.training = training
         self.augmentation = augmentation
+        self.roi_padding = roi_padding
 
     def __len__(self):
         return len(self.file_list)
@@ -39,6 +49,7 @@ class SceneFlowDataset(Dataset):
         dxy_path = (
             self.root / "slant_window" / self.file_list[index].with_suffix(".npy")
         )
+        image2roi = self.rois[index]
 
         data = {
             "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
@@ -46,10 +57,14 @@ class SceneFlowDataset(Dataset):
             "disp": np2torch(readPFM(pfm_path)),
             "dxy": np2torch(np.load(dxy_path), t=False),
         }
-        if self.crop_size is not None:
-            data = crop_and_pad(data, self.crop_size, self.training)
+
+        if self.clip_size is not None:
+            data = crop_and_pad(data, self.clip_size, self.training)
         if self.training and self.augmentation:
             data = augmentation(data, self.training)
+        if any(image2roi):
+            data = crop_and_roi(data, image2roi, self.roi_padding)
+        
         return data
 
 
