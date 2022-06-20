@@ -168,6 +168,6 @@ if __name__ == "__main__":
             LearningRateMonitor(logging_interval="step"),
             LogColorDepthMapCallback(),
         ],
-        devices=-1, # [0, 1, 2, 3],
+        devices=[0, 2, 3], # [0, 1, 2, 3], # -1,
     )
     trainer.fit(model)

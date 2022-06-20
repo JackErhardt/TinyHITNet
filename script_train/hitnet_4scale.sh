@@ -12,8 +12,8 @@ python3 train.py \
 --lr 4e-4 \
 --lr_decay 400000 0.25 408000 0.1 410000 0.025 \
 --lr_decay_type Lambda \
---batch_size 1 \
---batch_size_val 1 \
+--batch_size 3 \
+--batch_size_val 3 \
 --num_workers 2 \
 --num_workers_val 2 \
 --data_augmentation 1 \
