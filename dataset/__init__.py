@@ -25,6 +25,7 @@ def build_dataset(args, training):
                 clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
+                roi_padding=args.roi_padding,
             )
         elif d_type == "KITTI2015":
             dataset = KITTI2015Dataset(

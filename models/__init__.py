@@ -2,7 +2,7 @@ from .hit_net_sf import HITNet_SF, HITNetXL_SF
 from .hit_net_kitti import HITNet_KITTI
 from .stereo_net import StereoNet
 from .hit_net_4scale import HITNet_4Scale
-
+from .hit_net_3scale import HITNet_3Scale
 
 def build_model(args):
     if args.model == "HITNet_SF":
@@ -13,6 +13,8 @@ def build_model(args):
         model = HITNet_KITTI()
     elif args.model == "HITNet_4Scale":
         model = HITNet_4Scale()
+    elif args.model == "HITNet_3Scale":
+        model = HITNet_3Scale()
     elif args.model == "StereoNet":
         model = StereoNet()
     else:

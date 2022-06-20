@@ -54,7 +54,7 @@ class KITTI2012Dataset(Dataset):
         data = {
             "left": np2torch(cv2.imread(str(left_path), cv2.IMREAD_COLOR), bgr=True),
             "right": np2torch(cv2.imread(str(right_path), cv2.IMREAD_COLOR), bgr=True),
-            "disp": np2torch(cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32)/ 256),
+            "disp": np2torch(cv2.imread(str(disp_path), cv2.IMREAD_UNCHANGED).astype(np.float32) / 256),
             "dxy": np2torch(np.load(dxy_path), t=False),
         }
 

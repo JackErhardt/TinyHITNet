@@ -74,31 +74,22 @@ class FeatureExtractor(nn.Module):
             nn.LeakyReLU(0.2),
             nn.Conv2d(C[2], C[2], 3, 1, 1),
             nn.LeakyReLU(0.2),
-        )
-        self.down_3 = nn.Sequential(
-            SameConv2d(C[2], C[3], 4, 2),
+            nn.Conv2d(C[2], C[2], 3, 1, 1),
             nn.LeakyReLU(0.2),
-            nn.Conv2d(C[3], C[3], 3, 1, 1),
-            nn.LeakyReLU(0.2),
-            nn.Conv2d(C[3], C[3], 3, 1, 1),
-            nn.LeakyReLU(0.2),
-            nn.Conv2d(C[3], C[3], 3, 1, 1),
+            nn.Conv2d(C[2], C[2], 3, 1, 1),
             nn.LeakyReLU(0.2),
         )
-        self.up_2 = UpsampleBlock(C[3], C[2])
         self.up_1 = UpsampleBlock(C[2], C[1])
         self.up_0 = UpsampleBlock(C[1], C[0])
 
     def forward(self, input):
         x0 = self.down_0(input)
         x1 = self.down_1(x0)
-        x2 = self.down_2(x1)
-        o0 = self.down_3(x2)
-        o1 = self.up_2(o0, x2)
-        o2 = self.up_1(o1, x1)
-        o3 = self.up_0(o2, x0)
+        o0 = self.down_2(x1)
+        o1 = self.up_1(o0, x1)
+        o2 = self.up_0(o1, x0)
 
-        return o3, o2, o1, o0
+        return o2, o1, o0
 
 
 @functools.lru_cache()
@@ -357,14 +348,13 @@ class Refine(nn.Module):
         return hpy + x
 
 
-class HITNet_4Scale(nn.Module):
+class HITNet_3Scale(nn.Module):
     def __init__(self):
         super().__init__()
-        # self.align = 64
-        self.align = 32
+        self.align = 16
         self.max_disp = 256
 
-        num_feature = [16, 16, 24, 24]
+        num_feature = [16, 16, 24]
         self.feature_extractor = FeatureExtractor(num_feature)
 
         self.level = nn.ModuleList(
@@ -372,15 +362,14 @@ class HITNet_4Scale(nn.Module):
                 Level(num_feature[-1], self.max_disp // 16, 1),
                 Level(num_feature[-2], self.max_disp // 8, 2),
                 Level(num_feature[-3], self.max_disp // 4, 2, num_feature[-1]),
-                Level(num_feature[-4], self.max_disp // 2, 2, num_feature[-2]),
             ]
         )
 
         self.refine = nn.ModuleList(
             [
+                Refine(num_feature[-1], 32, [1, 3, 1, 1]),
                 Refine(num_feature[-2], 32, [1, 3, 1, 1]),
-                Refine(num_feature[-3], 32, [1, 3, 1, 1]),
-                Refine(num_feature[-4], 16, [1, 1]),
+                Refine(num_feature[-3], 16, [1, 1]),
             ]
         )
 
@@ -399,15 +388,14 @@ class HITNet_4Scale(nn.Module):
         h0, cv0, di0, wp0 = self.level[0](lf[-1], rf[-1])
         h1, cv1, di1, wp1 = self.level[1](lf[-2], rf[-2], hyp_up(h0, 2, 1))
         h2, cv2, di2, wp2 = self.level[2](lf[-3], rf[-3], hyp_up(h1, 2, 1), lf[-1])
-        h3, cv3, di3, wp3 = self.level[3](lf[-4], rf[-4], hyp_up(h2, 2, 1), lf[-2])
 
-        h4 = self.refine[0](h3, lf[-2])
-        h5 = self.refine[1](hyp_up(h4, 1, 2), lf[-3])
-        h6 = self.refine[2](hyp_up(h5, 1, 2), lf[-4])[:, :, :h, :w]
+        h3 = self.refine[0](h2, lf[-1])
+        h4 = self.refine[1](hyp_up(h3, 1, 2), lf[-2])
+        h5 = self.refine[2](hyp_up(h4, 1, 2), lf[-3])[:, :, :h, :w]
 
         return {
             "tile_size": 4,
-            "disp": h6[:, 0:1],
+            "disp": h5[:, 0:1],
             "multi_scale": [
                 h0[:, 0:1],
                 h1[:, 0:1],
@@ -415,9 +403,8 @@ class HITNet_4Scale(nn.Module):
                 h3[:, 0:1],
                 h4[:, 0:1],
                 h5[:, 0:1],
-                h6[:, 0:1],
             ],
-            "cost_volume": [cv0, cv1, cv2, cv3],
+            "cost_volume": [cv0, cv1, cv2],
             "slant": [
                 [h0[:, 0:1], h0[:, 1:3]],
                 [h1[:, 0:1], h1[:, 1:3]],
@@ -425,10 +412,9 @@ class HITNet_4Scale(nn.Module):
                 [h3[:, 0:1], h3[:, 1:3]],
                 [h4[:, 0:1], h4[:, 1:3]],
                 [h5[:, 0:1], h5[:, 1:3]],
-                [h6[:, 0:1], h6[:, 1:3]],
             ],
-            "init_disp": [di0, di1, di2, di3],
-            "select": [wp1, wp2, wp3],
+            "init_disp": [di0, di1, di2],
+            "select": [wp1, wp2],
         }
 
 

@@ -33,9 +33,15 @@ class EvalModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         pred = self(batch["left"], batch["right"])
-        c2r = batch["crop2roi"]
-        mask = (batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]] < self.max_disp) & (batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]] > 1e-3)
-        self.metric(pred["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]], batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]], mask)
+        if "crop2roi" in batch:
+            c2r = batch["crop2roi"]
+            pred_disp  = pred[ "disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]]
+            batch_disp = batch["disp"][:, :, c2r[0]:c2r[1], c2r[2]:c2r[3]]
+        else:
+            pred_disp = pred["disp"]
+            batch_disp = batch["disp"]
+        mask = (batch_disp < self.max_disp) & (batch_disp > 1e-3)
+        self.metric(pred_disp, batch_disp, mask)
         return
 
     def test_epoch_end(self, outputs):
@@ -74,7 +80,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(
         gpus=-1,
-        accelerator="ddp",
+        strategy="ddp",
         logger=False,
         checkpoint_callback=False,
     )

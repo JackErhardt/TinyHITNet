@@ -131,7 +131,6 @@ def augmentation(data: dict, training):
     #     data["right"] = torch.clip(data["right"] + right_noise, 0, 1)
     return data
 
-
 def crop_and_roi(data: dict, image2roi, roi_padding):
     src_h, src_w = list(data.values())[0].shape[-2:]
 

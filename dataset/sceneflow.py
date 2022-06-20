@@ -24,7 +24,7 @@ class SceneFlowDataset(Dataset):
     ):
         super().__init__()
         with open(image_list, "rt") as fp:
-            self.file_list = [Path(line.strip()) for line in fp]
+            self.file_list = []
             self.rois = [] # top, bottom, left, right
             for line in fp:
                 ls = line.strip().split()
