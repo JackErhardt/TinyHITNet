@@ -21,20 +21,46 @@ class PredictModel(pl.LightningModule):
 
 
 @torch.no_grad()
-def predict(model, lp, rp, width, roi, roi_padding, highlight, op):
+def predict(model, lp, rp, width, roi, roi_w_pad, roi_h_pad, highlight, op):
     left = cv2.imread(str(lp), cv2.IMREAD_COLOR)
     right = cv2.imread(str(rp), cv2.IMREAD_COLOR)
 
     image2roi = roi
-    image = left.shape
+    src_h, src_w, _ = left.shape
     if not any(image2roi):
-        image2roi = [0, image[0], 0, image[1]]
-    if(roi_padding != -1):
-        roi_pad = [ min(roi_padding, image2roi[0]), min(roi_padding, image[0] - image2roi[1]),
-                    min(roi_padding, image2roi[2]), min(roi_padding, image[1] - image2roi[3])]
+        image2roi = [0, src_h, 0, src_w]
+
+    # if(roi_padding != -1):
+    #     # roi_pad = [ min(roi_padding, image2roi[0]), min(roi_padding, image[0] - image2roi[1]),
+    #     #             min(roi_padding, image2roi[2]), min(roi_padding, image[1] - image2roi[3])]
+    #     # roi_pad = [ min(roi_padding, image2roi[0]), min(roi_padding, image[0] - image2roi[1]),
+    #     #             0, 0] # Pad height only
+    #     roi_pad = [ 0, 0,
+    #                 min(roi_padding, image2roi[2]), min(roi_padding, image[1] - image2roi[3])] # Pad width only
+    # else:
+    #     # roi_pad = [ image2roi[0], image[0] - image2roi[1],
+    #     #             image2roi[2], image[1] - image2roi[3]]
+    #     # roi_pad = [ image2roi[0], image[0] - image2roi[1],
+    #     #             0, 0] # Pad height only
+    #     roi_pad = [ 0, 0,
+    #                 image2roi[2], image[1] - image2roi[3]] # Pad width only
+
+    if roi_w_pad != -1:
+        roi_pad_left   = min(roi_w_pad, image2roi[2])
+        roi_pad_right  = min(roi_w_pad, src_w - image2roi[3])
     else:
-        roi_pad = [ image2roi[0], image[0] - image2roi[1],
-                    image2roi[2], image[1] - image2roi[3]]
+        roi_pad_left   = image2roi[2]
+        roi_pad_right  = src_w - image2roi[3]
+
+    if roi_h_pad != -1:
+        roi_pad_top    = min(roi_h_pad, image2roi[0])
+        roi_pad_bottom = min(roi_h_pad, src_h - image2roi[1])
+    else:
+        roi_pad_top    = image2roi[0]
+        roi_pad_bottom = src_h - image2roi[1]
+
+    roi_pad = [roi_pad_top, roi_pad_bottom, roi_pad_left, roi_pad_right]
+
     image2crop = [image2roi[0]-roi_pad[0], image2roi[1]+roi_pad[1], image2roi[2]-roi_pad[2], image2roi[3]+roi_pad[3]]
     crop2roi   = [roi_pad[0], roi_pad[0]+image2roi[1]-image2roi[0], roi_pad[2], roi_pad[2]+image2roi[3]-image2roi[2]]
 
@@ -61,30 +87,26 @@ def predict(model, lp, rp, width, roi, roi_padding, highlight, op):
     disp = torch.clip(disp / 192 * 255, 0, 255).long()
     disp = apply_colormap(disp)
 
-    if highlight:
-        i = crop2roi[0]
-        for j in range(crop2roi[2], crop2roi[3]):
-            left[0, 0, i, j], left[0, 1, i, j], left[0, 2, i, j] = 255, 0, 0
-            disp[0, 0, i, j], disp[0, 1, i, j], disp[0, 2, i, j] = 255, 0, 0
-        i = crop2roi[1]-1
-        for j in range(crop2roi[2], crop2roi[3]):
-            left[0, 0, i, j], left[0, 1, i, j], left[0, 2, i, j] = 255, 0, 0
-            disp[0, 0, i, j], disp[0, 1, i, j], disp[0, 2, i, j] = 255, 0, 0
-        j = crop2roi[2]
-        for i in range(crop2roi[0], crop2roi[1]):
-            left[0, 0, i, j], left[0, 1, i, j], left[0, 2, i, j] = 255, 0, 0
-            disp[0, 0, i, j], disp[0, 1, i, j], disp[0, 2, i, j] = 255, 0, 0
-        j = crop2roi[3]-1
-        for i in range(crop2roi[0], crop2roi[1]):
-            left[0, 0, i, j], left[0, 1, i, j], left[0, 2, i, j] = 255, 0, 0
-            disp[0, 0, i, j], disp[0, 1, i, j], disp[0, 2, i, j] = 255, 0, 0
-
-    output = [left, disp]
+    output = [left, right, disp]
     if "slant" in pred:
         dxy = dxy_colormap(pred["slant"][-1][1])
         output.append(dxy)
 
-    if not highlight:
+    if highlight:
+        for img in output:
+            i = crop2roi[0]
+            for j in range(crop2roi[2], crop2roi[3]):
+                img[0, 0, i, j], img[0, 1, i, j], img[0, 2, i, j] = 255, 0, 0
+            i = crop2roi[1]-1
+            for j in range(crop2roi[2], crop2roi[3]):
+                img[0, 0, i, j], img[0, 1, i, j], img[0, 2, i, j] = 255, 0, 0
+            j = crop2roi[2]
+            for i in range(crop2roi[0], crop2roi[1]):
+                img[0, 0, i, j], img[0, 1, i, j], img[0, 2, i, j] = 255, 0, 0
+            j = crop2roi[3]-1
+            for i in range(crop2roi[0], crop2roi[1]):
+                img[0, 0, i, j], img[0, 1, i, j], img[0, 2, i, j] = 255, 0, 0
+    else:
         output = [img[:, :, crop2roi[0]:crop2roi[1], crop2roi[2]:crop2roi[3]] for img in output]
 
     # output = np.concatenate(output, axis=0)
@@ -105,7 +127,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--images", nargs=2, required=True)
     parser.add_argument("--roi", nargs=4, type=int, default=[0, 0, 0, 0])
-    parser.add_argument("--roi_padding", type=int, default=0)
+    parser.add_argument("--roi_w_pad", type=int, default=0)
+    parser.add_argument("--roi_h_pad", type=int, default=0)
     parser.add_argument("--highlight", type=bool, default=False)
     parser.add_argument("--model", type=str, default="HITNet")
     parser.add_argument("--ckpt", required=True)
@@ -127,14 +150,14 @@ if __name__ == "__main__":
 
         for ids, (lp, rp) in enumerate(zip(lps, rps)):
             op = Path(args.output) / f"{lp.stem}_{ids}.png"
-            predict(model, lp, rp, args.width, args.roi, args.roi_padding, args.highlight, op)
+            predict(model, lp, rp, args.width, args.roi, args.roi_w_pad, args.roi_h_pad, args.highlight, op)
             print("output: {}".format(op))
     else:
         lp = Path(args.images[0])
         rp = Path(args.images[1])
-        op = Path("./predict_out/{}/{}_{}_{}_{}/pad{}.png".format(lp.stem, *args.roi, args.roi_padding))
+        op = Path("./predict_out/{}/{}_{}_{}_{}/pad{}_{}.png".format(lp.stem, *args.roi, args.roi_w_pad, args.roi_h_pad))
         # op = Path(args.output)
         # if op.is_dir():
         #     op = op / lp.name
-        predict(model, lp, rp, args.width, args.roi, args.roi_padding, args.highlight, op)
+        predict(model, lp, rp, args.width, args.roi, args.roi_w_pad, args.roi_h_pad, args.highlight, op)
         print("output: {}".format(op))

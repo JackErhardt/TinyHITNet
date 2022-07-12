@@ -131,15 +131,24 @@ def augmentation(data: dict, training):
     #     data["right"] = torch.clip(data["right"] + right_noise, 0, 1)
     return data
 
-def crop_and_roi(data: dict, image2roi, roi_padding):
+def crop_and_roi(data: dict, image2roi, roi_w_pad, roi_h_pad):
     src_h, src_w = list(data.values())[0].shape[-2:]
 
-    if roi_padding != -1:
-        roi_pad = [ min(roi_padding, image2roi[0]), min(roi_padding, src_h - image2roi[1]),
-                    min(roi_padding, image2roi[2]), min(roi_padding, src_w - image2roi[3])]
+    if roi_w_pad != -1:
+        roi_pad_left   = min(roi_w_pad, image2roi[2])
+        roi_pad_right  = min(roi_w_pad, src_w - image2roi[3])
     else:
-        roi_pad = [ image2roi[0], src_h - image2roi[1],
-                    image2roi[2], src_w - image2roi[3]]
+        roi_pad_left   = image2roi[2]
+        roi_pad_right  = src_w - image2roi[3]
+
+    if roi_h_pad != -1:
+        roi_pad_top    = min(roi_h_pad, image2roi[0])
+        roi_pad_bottom = min(roi_h_pad, src_h - image2roi[1])
+    else:
+        roi_pad_top    = image2roi[0]
+        roi_pad_bottom = src_h - image2roi[1]
+
+    roi_pad = [roi_pad_top, roi_pad_bottom, roi_pad_left, roi_pad_right]
 
     image2crop = [ image2roi[0] - roi_pad[0], image2roi[1] + roi_pad[1],
                    image2roi[2] - roi_pad[2], image2roi[3] + roi_pad[3]]

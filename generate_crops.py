@@ -7,12 +7,13 @@ from torch.utils.data import Dataset
 
 if __name__ == "__main__":
     # Variables
-    dataset = 'sceneflow'
-    input_name = 'sceneflow_search_val'
-    crops_per_image = 4
-    # crop_dx, crop_dy = 56, 182
-    crop_dx, crop_dy = 112, 164
-    output_name = 'sceneflow_search_val_medium'
+    dataset = 'kitti2015'
+    input_name = 'kitti2015_val20'
+    crops_per_image = 64
+    # crop_dx, crop_dy = 56, 182 # Small
+    # crop_dx, crop_dy = 112, 364 # Medium
+    crop_dx, crop_dy = 200, 200
+    output_name = 'kitti2015_val20_square200'
 
     if   dataset == 'kitti2012':
         root = Path('/z/erharj/kitti/2012/training/colored_0/')

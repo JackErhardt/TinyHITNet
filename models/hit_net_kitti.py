@@ -1,6 +1,6 @@
-# # Comment in when running as main
-# import sys
-# sys.path.append('./')
+# Comment in when running as main
+import sys
+sys.path.append('./')
 
 import torch
 import torch.nn as nn
@@ -106,6 +106,17 @@ class FeatureExtractor(nn.Module):
         o2 = self.up_2(o1, x2)
         o3 = self.up_1(o2, x1)
         o4 = self.up_0(o3, x0)
+
+        #print(">> feX_down0.shape:   {}".format(x0.shape))
+        #print(">> feX_down1_1.shape: {}".format(x1.shape))
+        #print(">> feX_down2_1.shape: {}".format(x2.shape))
+        #print(">> feX_down3_1.shape: {}".format(x3.shape))
+        #print(">> feX_down4_3.shape: {}".format(o0.shape))
+        #print(">> feX_up3_2.shape:   {}".format(o1.shape))
+        #print(">> feX_up2_2.shape:   {}".format(o2.shape))
+        #print(">> feX_up1_2.shape:   {}".format(o3.shape))
+        #print(">> feX_up0_2.shape:   {}".format(o4.shape))
+
         return o4, o3, o2, o1, o0
 
 
@@ -152,6 +163,7 @@ def warp_and_aggregate(hyp, left, right):
     assert scale == 4
 
     d_expand = disp_up(hyp[:, :1], hyp[:, 1:2], hyp[:, 2:3], scale, tile_expand=True)
+    #print(">>>> levelX_prop_dispup.shape: {}".format(d_expand.shape))
     d_range = torch.arange(right.size(3), device=right.device)
     d_range = d_range.view(1, 1, 1, -1) - d_expand
     d_range = d_range.repeat(1, right.size(1), 1, 1)
@@ -176,6 +188,7 @@ def warp_and_aggregate(hyp, left, right):
     cost = cost.reshape(n, c, h // scale, scale, w // scale, scale)
     cost = cost.permute(0, 3, 5, 1, 2, 4)
     cost = cost.reshape(n, scale * scale * c, h // scale, w // scale)
+    #print(">>>> levelX_prop_waacostX.shape: {}".format(cost.shape))
     return cost
 
 
@@ -191,8 +204,10 @@ class ResBlock(nn.Module):
 
     def forward(self, input):
         x = self.conv(input)
+        #print(">>>> levelX_resX_1.shape: {}".format(x.shape))
         x = x + input
         x = self.relu(x)
+        #print(">>>> levelX_resX_sum.shape: {}".format(x.shape))
         return x
 
 
@@ -212,14 +227,24 @@ class LevalProp(nn.Module):
         self.h_size = h_size
 
     def forward(self, hyps, l, r):
+        #print(">>> Running warp_and_aggregate")
         cost = [warp_and_aggregate(h, l, r) for h in hyps]
+        #print("<<< Finished warp_and_aggregate")
         cost = torch.cat(cost, dim=1)
+        #print(">>> levelX_prop_cat0.shape: {}".format(cost.shape))
         x = self.conv_neighbors(cost)
+        #print(">>> levelX_prop_0.shape: {}".format(x.shape))
         hyps = torch.cat(hyps, dim=1)
+        #print(">>> levelX_prop_cat1.shape: {}".format(hyps.shape))
         x = torch.cat((hyps, x), dim=1)
+        #print(">>> levelX_prop_cat2.shape: {}".format(x.shape))
         x = self.conv1(x)
+        #print(">>> levelX_prop_1.shape: {}".format(x.shape))
+        #print(">>> Running res_block")
         x = self.res_block(x)
+        #print("<<< Exiting res_block")
         x = self.convn(x)
+        #print(">>> levelX_prop_2.shape: {}".format(x.shape))
 
         dh = x[:, : 16 * self.h_size]
         w = x[:, 16 * self.h_size :]
@@ -266,6 +291,7 @@ class LevelInit(nn.Module):
             stride=(4, 4),
         )
         lt = self.conv_em(lt)
+        #print(">>> levelX_init_l1.shape:    {}".format(lt.shape))
 
         rt = same_padding_conv(
             r,
@@ -274,17 +300,23 @@ class LevelInit(nn.Module):
             s=(4, 1),
         )
         rt = self.conv_em(rt)
+        #print(">>> levelX_init_r1.shape:    {}".format(rt.shape))
 
         cv = make_cost_volume_v2(lt, rt, self.max_disp)
         cv = torch.norm(cv, p=1, dim=1)
         cv_min, d = torch.min(cv, dim=1, keepdim=True)
+        #print(">>> levelX_init_cvmin.shape: {}".format(cv_min.shape))
+        #print(">>> levelX_init_disp.shape:  {}".format(d.shape))
         d = d.float()
 
         if ref is None:
             ref = lt
         p = torch.cat((cv_min, ref), dim=1)
+        #print(">>> levelX_init_cat0.shape:  {}".format(p.shape))
         p = self.conv_hyp(p)
+        #print(">>> levelX_init_hyp.shape:   {}".format(p.shape))
         p = torch.cat((d, torch.zeros_like(d), torch.zeros_like(d), p), dim=1)
+        #print(">>> levelX_init_cat1.shape:  {}".format(p.shape))
         return p, cv
 
 
@@ -296,12 +328,21 @@ class Level(nn.Module):
         self.prop = LevalProp(self.h_size)
 
     def forward(self, l, r, h=None, ref=None):
+        #print(">> Running LevelInit")
         hi, cv = self.init(l, r, ref)
+        #print("<< Finished LevelInit")
+
         if self.h_size == 1:
+            #print(">> Running LevalProp")
             h, w = self.prop([hi], l, r)
+            #print("<< Finished LevalProp")
+
             return h, cv, hi[:, :1], []
         else:
+            #print(">> Running LevalProp")
             h, w = self.prop([hi, h], l, r)
+            #print("<< Finished LevalProp")
+
             h0 = h[:, :16]
             h1 = h[:, 16:]
             w0 = w[:, :1]
@@ -329,10 +370,16 @@ class Refine(nn.Module):
 
     def forward(self, hpy, left):
         x = torch.cat((left, hpy), dim=1)
+        #print(">> refineX_cat.shape: {}".format(x.shape))
         x = self.conv1x1(x)
+        #print(">> refineX_0.shape: {}".format(x.shape))
         x = self.conv1(x)
+        #print(">> refineX_1.shape: {}".format(x.shape))
+        #print(">> Running res_block")
         x = self.res_block(x)
+        #print("<< Finished res_block")
         x = self.convn(x)
+        #print(">> refineX_2.shape: {}".format(x.shape))
         return hpy + x
 
 
@@ -372,18 +419,48 @@ class HITNet_KITTI(nn.Module):
         left_img = F.pad(left_img, (0, w_pad, 0, h_pad))
         right_img = F.pad(right_img, (0, w_pad, 0, h_pad))
 
+        #print("> input_l.shape: {}".format(left_img.shape))
+        #print("> input_r.shape: {}".format(right_img.shape))
+
+        #print("> Running Left FeatureExtractor")
         lf = self.feature_extractor(left_img)
+        #print("< Left FeatureExtractor Finished")
+
+        #print("> Running Right FeatureExtractor")
         rf = self.feature_extractor(right_img)
+        #print("< Right FeatureExtractor Finished")
 
+        #print("> Running level[0]")
         h0, cv0, di0, wp0 = self.level[0](lf[-1], rf[-1])
-        h1, cv1, di1, wp1 = self.level[1](lf[-2], rf[-2], hyp_up(h0, 2, 1))
-        h2, cv2, di2, wp2 = self.level[2](lf[-3], rf[-3], hyp_up(h1, 2, 1), lf[-1])
-        h3, cv3, di3, wp3 = self.level[3](lf[-4], rf[-4], hyp_up(h2, 2, 1), lf[-2])
-        h4, cv4, di4, wp4 = self.level[4](lf[-5], rf[-5], hyp_up(h3, 2, 1), lf[-3])
+        #print("< Finished level[0]")
 
+        #print("> Running level[1]")
+        h1, cv1, di1, wp1 = self.level[1](lf[-2], rf[-2], hyp_up(h0, 2, 1))
+        #print("< Finished level[1]")
+
+        #print("> Running level[2]")
+        h2, cv2, di2, wp2 = self.level[2](lf[-3], rf[-3], hyp_up(h1, 2, 1), lf[-1])
+        #print("< Finished level[2]")
+
+        #print("> Running level[3]")
+        h3, cv3, di3, wp3 = self.level[3](lf[-4], rf[-4], hyp_up(h2, 2, 1), lf[-2])
+        #print("< Finished level[3]")
+
+        #print("> Running level[4]")
+        h4, cv4, di4, wp4 = self.level[4](lf[-5], rf[-5], hyp_up(h3, 2, 1), lf[-3])
+        #print("< Finished level[4]")
+
+        #print("> Running refine[0]")
         h5 = self.refine[0](h4, lf[-3])
+        #print("< Finished refine[0]")
+
+        #print("> Running refine[1]")
         h6 = self.refine[1](hyp_up(h5, 1, 2), lf[-4])
+        #print("< Finished refine[1]")
+
+        #print("> Running refine[2]")
         h7 = self.refine[2](hyp_up(h6, 1, 2), lf[-5])[:, :, :h, :w]
+        #print("< Finished refine[2]")
 
         return {
             "tile_size": 4,
@@ -422,7 +499,8 @@ if __name__ == "__main__":
     right = torch.rand(1, 3, 375, 1242)
     model = HITNet_KITTI()
 
-    print(model(left, right)["disp"].size())
+    # data = model(left, right)
+    # #print(data["disp"].size())
 
     total_ops, total_params = profile(
         model,

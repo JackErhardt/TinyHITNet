@@ -25,7 +25,8 @@ def build_dataset(args, training):
                 clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
-                roi_padding=args.roi_padding,
+                roi_w_pad=args.roi_w_pad,
+                roi_h_pad=args.roi_h_pad,
             )
         elif d_type == "KITTI2015":
             dataset = KITTI2015Dataset(
@@ -34,7 +35,8 @@ def build_dataset(args, training):
                 clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
-                roi_padding=args.roi_padding,
+                roi_w_pad=args.roi_w_pad,
+                roi_h_pad=args.roi_h_pad,
             )
         elif d_type == "KITTI2012":
             dataset = KITTI2012Dataset(
@@ -43,7 +45,8 @@ def build_dataset(args, training):
                 clip_size=data_size,
                 training=training,
                 augmentation=args.data_augmentation,
-                roi_padding=args.roi_padding,
+                roi_w_pad=args.roi_w_pad,
+                roi_h_pad=args.roi_h_pad,
             )
         else:
             raise NotImplementedError

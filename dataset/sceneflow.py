@@ -20,7 +20,8 @@ class SceneFlowDataset(Dataset):
         clip_size=None,
         training=False,
         augmentation=False,
-        roi_padding=-1,
+        roi_h_pad=-1,
+        roi_y_pad=-1,
     ):
         super().__init__()
         with open(image_list, "rt") as fp:
@@ -37,7 +38,8 @@ class SceneFlowDataset(Dataset):
         self.clip_size = clip_size
         self.training = training
         self.augmentation = augmentation
-        self.roi_padding = roi_padding
+        self.roi_h_pad = roi_h_pad
+        self.roi_y_pad = roi_y_pad
 
     def __len__(self):
         return len(self.file_list)
@@ -63,7 +65,7 @@ class SceneFlowDataset(Dataset):
         if self.training and self.augmentation:
             data = augmentation(data, self.training)
         if any(image2roi):
-            data = crop_and_roi(data, image2roi, self.roi_padding)
+            data = crop_and_roi(data, image2roi, self.roi_h_pad, self.roi_y_pad)
         
         return data
 

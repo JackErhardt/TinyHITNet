@@ -60,7 +60,8 @@ if __name__ == "__main__":
     parser.add_argument("--data_list_val", type=str, nargs="+")
     parser.add_argument("--data_size_val", type=int, nargs=2, default=None)
     parser.add_argument("--data_augmentation", type=int, default=0)
-    parser.add_argument("--roi_padding", type=int, default=0)
+    parser.add_argument("--roi_w_pad", type=int, default=0)
+    parser.add_argument("--roi_h_pad", type=int, default=0)
 
     args = parser.parse_args()
 

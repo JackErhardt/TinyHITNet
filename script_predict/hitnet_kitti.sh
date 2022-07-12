@@ -3,4 +3,6 @@ python3 predict.py \
 	--roi 136 188 970 1152 \
 	--model HITNet_KITTI \
 	--ckpt ckpt/hitnet_kitti.ckpt \
-	--roi_padding 0 \
+	--roi_w_pad -1 \
+	--roi_h_pad -1 \
+	--highlight 1 \
